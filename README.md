@@ -1,21 +1,21 @@
-## PostgresSQL_DVD-Rental-Database
+# PostgresSQL_DVD-Rental-Database
 This repository includes my final project for my Advanced Data Management course. My goal within this project was to use a preexisting data from a fictitious DVD Rental business to identify their clients' favorite genres of movie.
 
 The assignment parameters were as follows:
 
-# COMPETENCIES
+## COMPETENCIES
 4037.4.1 : Writing Complex SQL Statements
 The graduate writes complex SQL statements in order to implement functions, stored procedures, and triggers to prepare data sets for data analysis and manipulation.
 
 4037.4.2 : Configuring Extraction, Transformation, and Loading (ETL) Workflows
 The graduate configures data extraction, transformation, and loading tasks in order to automate data integration.
 
-# INTRODUCTION
+## INTRODUCTION
 Data analysts frequently transform data within a database so that it can be used for analysis and so that the data will be easier for nontechnical users to use and understand. You will emulate such a process in this task by choosing your own business question to analyze, creating tables and queries to use as a business report, and streamlining your analysis by writing your own SQL functions, triggers, and stored procedures.
 
 This task defines a report as a collection of data that answers a real-world business question. Your report will have two distinct sections (SQL tables that you will create) that differ in the granularity of the data they present and how directly they support the answering of the business question you choose. The detailed table should contain all data that informs the answer to the question at a very granular level, and the summary table should contain aggregated data that provide a direct answer to the business question.
 
-# REQUIREMENTS
+## REQUIREMENTS
 Your submission must be your original work. No more than a combined total of 30% of the submission and no more than a 10% match to any one individual source can be directly quoted or closely paraphrased from sources, even if cited correctly. The similarity report that is provided when you submit your task can be used as a guide.
 
 You must use the rubric to direct the creation of your submission because it provides detailed criteria that will be used to evaluate your work. Each requirement below may be evaluated by more than one rubric aspect. The rubric aspect titles may contain hyperlinks to relevant portions of the course.
