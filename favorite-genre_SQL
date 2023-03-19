@@ -1,0 +1,144 @@
+--Notes related to each code block are listed in italics above the relevant code section
+
+--Create the detailed table 
+
+CREATE TABLE IF NOT EXISTS moviepreference_detail (
+customer_id INT,
+customer_name VARCHAR(255),
+email VARCHAR(50),
+favorite_genre VARCHAR(25),
+active_text VARCHAR(8)
+);
+
+--Create the summary table 
+
+CREATE TABLE IF NOT EXISTS moviepreference_summary (
+favorite_genre VARCHAR(25),
+customer_count INT
+);
+
+--Create a function to turn the 0s and 1s from customer.active to inactive 
+--and active respectively
+
+CREATE OR REPLACE FUNCTION ACTIVE_AS_TEXT(active INT) 
+RETURNS VARCHAR(8)
+LANGUAGE plpgsql
+AS
+$$
+DECLARE active_text VARCHAR(8);
+BEGIN
+active_text:='active';
+IF active=0 THEN
+active_text:='inactive';
+END IF;
+RETURN active_text;
+END;
+$$;
+
+--Create the trigger to update the summary table
+
+CREATE OR REPLACE FUNCTION summary_reset() 
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+SET client_min_messages TO NOTICE;
+TRUNCATE TABLE moviepreference_summary;
+INSERT INTO moviepreference_summary (favorite_genre, customer_count)
+SELECT 
+moviepreference_detail.favorite_genre AS favorite_genre,
+COUNT(moviepreference_detail.customer_id) AS customer_count
+FROM moviepreference_detail
+WHERE NOT moviepreference_detail.active_text = 'inactive'
+GROUP BY favorite_genre
+ORDER BY favorite_genre ASC;
+RAISE NOTICE 'Trigger Function Executed Successfully';
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER summary_trigger
+AFTER INSERT
+ON moviepreference_detail
+FOR EACH STATEMENT
+EXECUTE FUNCTION summary_reset();
+
+--Insert data into the detailed table
+
+INSERT INTO moviepreference_detail (customer_id, customer_name, email, favorite_genre,active_text)
+SELECT 
+customer.customer_id, 
+CONCAT(customer.first_name,' ', customer.last_name) AS customer_name, 
+customer.email,
+mode() WITHIN GROUP (ORDER BY category.name) AS favorite_genre,
+ACTIVE_AS_TEXT(customer.active) AS active_text
+FROM customer
+LEFT JOIN rental 
+ON customer.customer_id = rental.customer_id
+INNER JOIN inventory 
+ON rental.inventory_id = inventory.inventory_id
+INNER JOIN film_category 
+ON inventory.film_id = film_category.film_id
+INNER JOIN category 
+ON film_category.category_id = category.category_id
+GROUP BY customer.customer_id, customer_name, email,active_text
+ORDER BY customer_id ASC;
+
+--Create stored procedure to update both the detailed and summary tables
+--Note: for purposes of the assignment, the summary table will be updated twice
+--when this procedure runs due to the combination of the table refresh code in the
+--procedure and the trigger function above
+
+CREATE OR REPLACE PROCEDURE full_reset()
+LANGUAGE plpgsql
+AS
+$$
+BEGIN
+SET client_min_messages TO NOTICE;
+TRUNCATE TABLE moviepreference_detail;
+INSERT INTO moviepreference_detail (
+customer_id, 
+customer_name, 
+email, 
+favorite_genre,
+active_text
+)
+SELECT 
+customer.customer_id, 
+CONCAT(customer.first_name,' ', customer.last_name) AS customer_name, 
+customer.email,
+mode() WITHIN GROUP (ORDER BY category.name) AS favorite_genre,
+ACTIVE_AS_TEXT(customer.active) AS active_text
+FROM customer
+LEFT JOIN rental 
+ON customer.customer_id = rental.customer_id
+INNER JOIN inventory 
+ON rental.inventory_id = inventory.inventory_id
+INNER JOIN film_category 
+ON inventory.film_id = film_category.film_id
+INNER JOIN category 
+ON film_category.category_id = category.category_id
+GROUP BY customer.customer_id, customer_name, email,active_text
+ORDER BY customer_id ASC;
+TRUNCATE TABLE moviepreference_summary;
+INSERT INTO moviepreference_summary (favorite_genre, customer_count)
+SELECT 
+moviepreference_detail.favorite_genre AS favorite_genre,
+COUNT(moviepreference_detail.customer_id) AS customer_count
+FROM moviepreference_detail
+WHERE NOT moviepreference_detail.active_text = 'inactive'
+GROUP BY favorite_genre
+ORDER BY favorite_genre;
+RAISE NOTICE 'Full Reset Procedure Executed Successfully';
+END;
+$$;
+
+--Select statement to view detailed table
+--SELECT * FROM moviepreference_detail;
+
+--Select statement to view summary table
+--SELECT * FROM moviepreference_summary;
+
+--Call the stored procedure to initiate refresh of tables
+--CALL full_reset();
